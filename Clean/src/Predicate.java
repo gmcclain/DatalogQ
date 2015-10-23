@@ -1,0 +1,100 @@
+package src;
+
+import java.util.*;
+public class Predicate {
+ private String predName;
+ private Vector<Argument> arguments;
+ private boolean isNegated;
+ private boolean isComparison;
+ private Argument leftOperand;
+ private String comparisonOperator;
+ private Argument rightOperand;
+ 
+ public void setPredName(String predName) {
+   this.predName = predName;
+ }
+ 
+ public String getPredName() {
+   return predName;
+ }
+ 
+ public void setArguments(Vector<Argument> arguments) {
+   this.arguments = arguments;
+ }
+ 
+ public Vector<Argument> getArguments() {
+   return arguments;
+ }
+ 
+ public void setNegated(boolean isNegated) {
+   this.isNegated = isNegated;
+ }
+ 
+ public boolean isNegated() {
+   return isNegated;
+ }
+ 
+ public void setComparison(boolean isComparison) {
+   this.isComparison = isComparison;
+ }
+ 
+ public boolean isComparison() {
+   return isComparison;
+ }
+ 
+ public void setLeftOperand(Argument leftOperand) {
+   this.leftOperand = leftOperand;
+ }
+ 
+ public Argument getLeftOperand() {
+   return leftOperand;
+ }
+ 
+ public void setRightOperand(Argument rightOperand) {
+   this.rightOperand = rightOperand;
+ }
+ 
+ public Argument getRightOperand() {
+   return rightOperand;
+ }
+ 
+ public void setComparisonOperator(String comparisonOperator) {
+   this.comparisonOperator = comparisonOperator;
+ }
+ 
+ public String getComparisonOperator() {
+   return comparisonOperator;
+ }
+ 
+ public String toString() {
+   String toReturn = "";
+   if(isNegated())
+     toReturn += "NOT ";
+   if(isComparison())
+     toReturn += getLeftOperand() + " " + getComparisonOperator() + " " + getRightOperand();
+   else {
+     toReturn += getPredName() + "(";
+     for(int x = 0; x < arguments.size(); x++) {
+       toReturn += arguments.get(x);
+       if(x != arguments.size()-1)
+         toReturn += ",";
+     }
+     toReturn += ")";
+   }   
+   
+   return toReturn;
+ }
+ 
+ public int getArity() {
+   return arguments.size();
+ }
+ 
+ public boolean equals(Object o) {
+   if(!(o instanceof Predicate))
+     return false;
+   Predicate temp = (Predicate)o;
+   if(temp.getPredName().equalsIgnoreCase(getPredName()))
+     return true;
+   return false;
+ }
+}

@@ -1,0 +1,2 @@
+aperson(A) :- actor(T,A).
+actor(T,A) :- aperson(A).$

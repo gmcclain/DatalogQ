@@ -1,0 +1,187 @@
+/*
+
+
+ddb ::= idb_rules DOLLAR
+idb_rules ::= idb_rule | idb_rule idb_rules
+idb_rule ::= NAME LPAREN arg_list RPAREN IMPLIES idb_body PERIOD
+idb_body ::= literal | literal COMMA idb_body
+literal ::= NOTOP predicate | predicate
+predicate ::= NAME LPAREN arg_list RPAREN | arg COMPARISON arg
+arg_list ::= arg | arg COMMA arg_list
+arg ::= NUMBER | STRING | VARIABLE
+
+*/
+
+import java_cup.runtime.*;
+
+parser code {:
+
+ public void report_error(String message, Object info) {
+   StringBuffer m = new StringBuffer("Error");
+   if (info instanceof java_cup.runtime.Symbol) {
+     java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+     if (s.left >= 0) {
+       m.append(" in line "+(s.left+1));
+       if (s.right >= 0)
+         m.append(", column "+(s.right+1));
+     }
+   }
+   m.append(" : "+message);
+   System.err.println(m);
+ }
+
+ public void report_fatal_error(String message, Object info)
+   throws Exception {
+   report_error(message, info);
+   throw new Exception();
+   //System.exit(1);
+ }
+
+:};
+
+terminal           ERROR, IMPLIES, PERIOD, COMMA, LPAREN, RPAREN, DOLLAR, NOTOP, STRING, COMPARISON;
+terminal Integer   NUMBER;
+terminal String    NAME, VARIABLE;
+
+/* ----------------------------Grammar Section-------------------- */
+
+non terminal DQNode  ddb, idb_rules, idb_rule, idb_body, literal, predicate, arg_list, arg;
+   
+ddb::=
+	idb_rules:c1 DOLLAR
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_DDB);
+		n.setLeftChild(c1);
+		RESULT = n;
+	:}
+;
+
+idb_rules::=
+	idb_rule:c1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_IDB_RULES);
+		n.setLeftChild(c1);
+		RESULT = n;
+	:} |
+	idb_rule:c1 idb_rules:c2
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_IDB_RULES_LIST);
+		n.setLeftChild(c1);
+		n.setRightChild(c2);
+		RESULT = n;
+	:}
+;
+
+idb_rule::=
+	NAME:name LPAREN arg_list:c1 RPAREN IMPLIES idb_body:c2 PERIOD
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_IDB_RULE);
+		n.setValue(name.toUpperCase());
+		n.setLeftChild(c1);
+		n.setRightChild(c2);
+		RESULT = n;
+
+	:}
+;
+
+idb_body::=
+	literal:c1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_IDB_BODY);
+		n.setLeftChild(c1);
+		RESULT = n;
+	:} |
+	literal:c1 COMMA idb_body:c2
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_IDB_BODY_LIST);
+		n.setLeftChild(c1);
+		n.setRightChild(c2);
+		RESULT = n;
+	:}
+;
+
+literal::=
+	NOTOP predicate:c1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_LITERAL_NEGATED);
+		n.setLeftChild(c1);
+		RESULT = n;
+	:} |
+	predicate:c1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_LITERAL);
+		n.setLeftChild(c1);
+		RESULT = n;
+	:}
+;
+
+predicate::=
+	NAME:n1 LPAREN arg_list:c1 RPAREN
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_PREDICATE_REGULAR);
+		n.setValue(n1.toUpperCase());
+		n.setLeftChild(c1);
+		RESULT = n;
+	:} |
+	arg:c1 COMPARISON:n1 arg:c2
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_PREDICATE_COMPARISON);
+		n.setLeftChild(c1);
+		n.setRightChild(c2);
+		n.setValue(n1.toString());
+		RESULT = n;
+	:}
+;
+
+arg_list::=
+	arg:c1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_ARGUMENT);
+		n.setLeftChild(c1);
+		RESULT = n;
+
+        :} |
+	arg:c1 COMMA arg_list:c2
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_ARGUMENT_LIST);
+		n.setLeftChild(c1);
+		n.setRightChild(c2);
+		RESULT = n;
+	:}
+;
+
+arg::=
+	NUMBER:n1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_ARGUMENT_NUMBER);
+		n.setValue(n1.toString());
+		RESULT = n;
+	:} |
+	STRING:n1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_ARGUMENT_STRING);
+		n.setValue(n1.toString().toUpperCase());
+		RESULT = n;
+	:} |
+	VARIABLE:n1
+	{:
+		DQNode n = new DQNode();
+		n.setNodeType(DQNode.TYPE_ARGUMENT_VARIABLE);
+		n.setValue(n1.toUpperCase());
+		RESULT = n;
+	:}
+;

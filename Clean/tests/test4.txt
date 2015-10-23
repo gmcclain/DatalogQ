@@ -1,0 +1,5 @@
+temp1(S) :- courses(T,N,'csc226',_,_,_,_), enrolls(S,T,N).
+temp2(S) :- courses(T,N,'csc227',_,_,_,_), enrolls(S,T,N).
+answer(S) :- temp1(S).
+answer(S) :- temp2(S).
+$
